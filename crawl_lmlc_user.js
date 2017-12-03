@@ -1,14 +1,6 @@
-let http = require("http"),
-    url = require("url"),
-    superagent = require('superagent-charset'),
-    cheerio = require("cheerio"),
-    async = require("async"),
-    eventproxy = require('eventproxy'),
-    request = require("request"),
+let superagent = require('superagent-charset'),
     fs = require('fs'),
-	ep = new eventproxy(),
-    colors = require('colors'),
-    sortArrMethods = require('./sortArr.js');
+    colors = require('colors');
 
 // node后台log颜色设置
 colors.setTheme({
@@ -46,15 +38,12 @@ Date.prototype.format = function(format) {
 }
 
 let counter = 0;
-let total = 4;
-let delay = 180*1000;
+let total = 3;
+let delay = 180*1000; // 后台数据三分钟更新一次，所以这中间如果购买人超过10个的话，会漏掉这部分数据
 let ajaxUrl = 'https://www.lmlc.com/s/web/home/user_buying';
 
 if(!fs.existsSync('user.json')){
     fs.writeFileSync('user.json', '');
-}
-if(!fs.existsSync('originUser.json')){
-    fs.writeFileSync('originUser.json', '');
 }
 
 let timer = setInterval(function() {
@@ -64,14 +53,12 @@ let timer = setInterval(function() {
 requestData(ajaxUrl);
 
 function formatData(data){
-    let outArr = [];
     for(let i=0, len=data.length; i<len; i++){
         delete data[i].userPic;
         data[i].buyTime = +new Date() - data[i].time;
         data[i].uniqueId = data[i].payAmount.toString() + data[i].productId + data[i].username;
-        outArr.push(data[i]);
     }
-    return outArr
+    return data
 }
 
 function requestData(url) {
@@ -87,26 +74,18 @@ function requestData(url) {
           return;
         }
         let newData = JSON.parse(pres.text).data;
-        // console.log(newData);
         let formatNewData = formatData(newData);
         let data = fs.readFileSync('user.json', 'utf-8');
-        let originData = fs.readFileSync('originUser.json', 'utf-8');
         if(!data){
             fs.writeFile('user.json', JSON.stringify(formatNewData), (err) => {
                 if (err) throw err;
                 let time = (new Date()).format("yyyy-MM-dd hh:mm:ss");
                 console.log((`=============== 第${counter}次爬取，时间：${time} ===============`).silly);
             });
-            fs.writeFile('originUser.json', JSON.stringify(formatNewData), (err) => {
-                if (err) throw err;
-            });
         }else{
             let oldData = JSON.parse(data);
-            originData = JSON.parse(originData);
             let addData = [];
-            fs.writeFile('originUser.json', JSON.stringify(originData.concat(formatNewData)), (err) => {
-                if (err) throw err;
-            });
+            // 排重算法，如果uniqueId不一样那肯定是新生成的，否则看时间差如果是0(三分钟内请求多次)或者三分钟则是旧数据
             for(let i=0, len=formatNewData.length; i<len; i++){
                 let matchArr = [];
                 for(let len2=oldData.length, j=Math.max(0,len2 - 20); j<len2; j++){
@@ -122,6 +101,7 @@ function requestData(url) {
                         let delta = formatNewData[i].time - oldData[matchArr[k]].time;
                         if(delta == 0 || (Math.abs(delta - 3*60*1000) < 1000)){
                             isNewBuy = false;
+                            // 更新时间，这样下一次判断还是三分钟
                             oldData[matchArr[k]].time = formatNewData[i].time;
                         }
                     }
