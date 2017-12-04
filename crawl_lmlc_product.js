@@ -38,8 +38,8 @@ Date.prototype.format = function(format) {
 }
 
 let counter = 0;
-let total = 10;
-let delay = 1*1000;
+let total = 4*60*60/5; // 爬取的次数，为0则一直爬取
+let delay = 5*1000;
 let ajaxUrl = 'https://www.lmlc.com/web/product/product_list?pageSize=10&pageNo=1&type=0';
 
 if(!fs.existsSync('product.json') || !fs.readFileSync('product.json', 'utf-8')){
@@ -75,7 +75,7 @@ function formatData(data){
 
 function requestData(url) {
     counter++;
-    if(counter == total){
+    if(total && counter == total){
         clearInterval(timer);
     }
     superagent.get(url)

@@ -14,7 +14,8 @@
   },
   "devDependencies": {},
   "scripts": {
-    
+    "user": "screen -d -m -L node crawl_lmlc_user.js --nolivereload --nobrowser",
+    "product": "screen -d -m -L node crawl_lmlc_product.js --nolivereload --nobrowser"
   },
   "repository": {
     "type": "git",

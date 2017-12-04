@@ -38,7 +38,7 @@ Date.prototype.format = function(format) {
 }
 
 let counter = 0;
-let total = 3;
+let total = 4*60*60/180; // 爬取的次数，为0则一直爬取
 let delay = 180*1000; // 后台数据三分钟更新一次，所以这中间如果购买人超过10个的话，会漏掉这部分数据
 let ajaxUrl = 'https://www.lmlc.com/s/web/home/user_buying';
 
