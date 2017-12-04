@@ -38,12 +38,12 @@ Date.prototype.format = function(format) {
 }
 
 let counter = 0;
-let total = 5;
-let delay = 5*1000;
+let total = 10;
+let delay = 1*1000;
 let ajaxUrl = 'https://www.lmlc.com/web/product/product_list?pageSize=10&pageNo=1&type=0';
 
-if(!fs.existsSync('product.json')){
-    fs.writeFileSync('product.json', '');
+if(!fs.existsSync('product.json') || !fs.readFileSync('product.json', 'utf-8')){
+    fs.writeFileSync('product.json', JSON.stringify([]));
 }
 
 let timer = setInterval(function() {
@@ -55,10 +55,20 @@ requestData(ajaxUrl);
 function formatData(data){
     let outArr = [];
     for(let i=0, len=data.length; i<len; i++){
-        delete data[i].productPic;
-        data[i].buyTime = +new Date() - data[i].time;
-        data[i].uniqueId = data[i].payAmount.toString() + data[i].productId + data[i].productname;
-        outArr.push(data[i]);
+        let obj = {};
+        obj.name = data[i].name;
+        obj.financeTotalAmount = data[i].financeTotalAmount;
+        obj.alreadyBuyAmount = data[i].alreadyBuyAmount;
+        obj.canBuyAmount = data[i].canBuyAmount;
+        obj.productId = data[i].id;
+        obj.yearReturnRate = data[i].yearReturnRate;
+        obj.investementDays = data[i].investementDays;
+        obj.buyStartTime = data[i].buyStartTime;
+        obj.buyEndTime = data[i].buyEndTime;
+        obj.interestStartTime = data[i].interestStartTime;
+        obj.interestEndTime = data[i].interestEndTime;
+        obj.getDataTime = +new Date();
+        outArr.push(obj);
     }
     return outArr
 }
@@ -75,25 +85,19 @@ function requestData(url) {
           console.log(err.message.error);
           return;
         }
-        let newData = JSON.parse(pres.text).data;
-        if(newData.totalPage > 1){
+        let time = (new Date()).format("yyyy-MM-dd hh:mm:ss");
+        let addData = JSON.parse(pres.text).data;
+        if(addData.totalPage > 1){
             console.log('产品列表不止一页！'.error);
+            fs.appendFileSync('debug.txt', '\n\n产品列表不止一页！发生于：' + time);
         }
-        let formatNewData = formatData(newData.result);
-        let data = fs.readFileSync('product.json', 'utf-8');
-        if(!data){
-            fs.writeFile('product.json', JSON.stringify(formatNewData), (err) => {
-                if (err) throw err;
-                let time = (new Date()).format("yyyy-MM-dd hh:mm:ss");
-                console.log((`=============== 第${counter}次爬取，时间：${time} ===============`).silly);
-            });
-        }else{
-            fs.writeFile('product.json', JSON.stringify(oldData.concat(addData)), (err) => {
-                if (err) throw err;
-                let time = (new Date()).format("yyyy-MM-dd hh:mm:ss");
-                console.log((`=============== 第${counter}次爬取，时间：${time} ===============`).silly);
-            });
-        }
+        let formatedAddData = formatData(addData.result);
+        let oldData = JSON.parse(fs.readFileSync('product.json', 'utf-8'));
+        oldData.push(formatedAddData);
+        fs.writeFile('product.json', JSON.stringify(oldData), (err) => {
+            if (err) throw err;
+            console.log((`=============== 第${counter}次爬取，时间：${time} ===============`).silly);
+        });
     });
 }
 
