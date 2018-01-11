@@ -14,8 +14,8 @@
   },
   "devDependencies": {},
   "scripts": {
-    "user": "pm2 start crawl_lmlc_user.js",
-    "product": "pm2 start crawl_lmlc_product.js"
+    "top": "node crawl_top_movies.js",
+    "china": "node crawl_china_movies.js"
   },
   "repository": {
     "type": "git",
