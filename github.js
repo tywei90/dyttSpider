@@ -11,7 +11,7 @@ var http = require("http"),
 	ep = new eventproxy();
 
 var pageUrls = [];
-for (var i = 1; i <= 1; i++) {
+for (var i = 1; i <= 13; i++) {
     pageUrls.push('https://github.com/ciqulover/CMS-of-Blog/stargazers?page=' + i);
 }
 
